@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: bronze_ingestion
+    schema: bronze
+    tables:
+      - name: yellow_tripdata
+      - name: green_tripdata
+      - name: taxi_zone_lookup

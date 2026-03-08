@@ -1,2 +1,12 @@
 /.env
 /original.env
+
+# Base de datos
+/db-data
+
+# Archivos cache de mageai
+/orchestrator-data/mage_data/scheduler/pipelines/dbt_build_gold
+/orchestrator-data/mage_data/scheduler/pipelines/dbt_build_silver
+/orchestrator-data/mage_data/scheduler/pipelines/example_pipeline
+/orchestrator-data/mage_data/scheduler/pipelines/ingest_bronze
+/orchestrator-data/mage_data/scheduler/pipelines/qb_invoices_backfill

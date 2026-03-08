@@ -1,6 +1,6 @@
 # https://docs.getdbt.com/docs/core/connect-data-platform/profiles.yml
 
-base:
+nyc_taxis_transformations:
   outputs:
 
     dev:
@@ -8,8 +8,9 @@ base:
       host: "{{ mage_secret_var('POSTGRES_HOST') }}"
       user: "{{ mage_secret_var('POSTGRES_USER') }}"
       pass: "{{ mage_secret_var('POSTGRES_PASSWORD') }}"
-      port: "{{ mage_secret_var('POSTGRES_PORT') }}"
+      port: {{ mage_secret_var('POSTGRES_PORT') }}
       dbname: "{{ mage_secret_var('POSTGRES_DB') }}"
+      schema: "analytics"
       threads: 4
 
   target: dev

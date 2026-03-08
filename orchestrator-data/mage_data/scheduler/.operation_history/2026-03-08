@@ -1,0 +1,1 @@
+{"operation": "create", "resource": {"type": "pipeline", "uuid": "dbt_build_gold"}, "timestamp": 1772994230, "user": 1}

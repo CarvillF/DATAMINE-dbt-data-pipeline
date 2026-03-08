@@ -1,0 +1,29 @@
+version: 2
+
+models:
+  - name: int_taxi_trips_zones_joined
+    description: "Unificacion de servicios de taxi y enriquecimiento con zonas"
+    columns:
+      - name: pickup_ts
+        description: "Timestamp de inicio no nulo"
+        tests:
+          - not_null
+          
+      - name: dropoff_ts
+        description: "Timestamp de fin no nulo"
+        tests:
+          - not_null
+
+      - name: pickup_location_id
+        description: "Verificación de que todo pickup_location_id de cada viaje se asocie a una zona valida"
+        tests:
+          - relationships:
+              to: source('bronze_ingestion', 'taxi_zone_lookup')
+              field: locationid
+              
+      - name: dropoff_location_id
+        description: "Verificación de que todo dropoff_location_id de cada viaje se asocie a una zona valida"
+        tests:
+          - relationships:
+              to: source('bronze_ingestion', 'taxi_zone_lookup')
+              field: locationid
