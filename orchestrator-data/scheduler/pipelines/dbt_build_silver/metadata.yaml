@@ -13,18 +13,36 @@ blocks:
       project_path: dbt/nyc_taxis_transformations
     limit: 1000
     use_raw_sql: false
-  downstream_blocks: []
+  downstream_blocks:
+  - trigger_dbt_gold
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: sql
   name: dbt/nyc_taxis_transformations/models/silver/int_taxi_trips_zones_joined
   retry_config: null
-  status: executed
+  status: failed
   timeout: null
   type: dbt
   upstream_blocks: []
   uuid: dbt/nyc_taxis_transformations/models/silver/int_taxi_trips_zones_joined
+- all_upstream_blocks_executed: false
+  color: null
+  configuration:
+    export_write_policy: append
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: trigger_dbt_gold
+  retry_config: null
+  status: updated
+  timeout: null
+  type: data_exporter
+  upstream_blocks:
+  - dbt/nyc_taxis_transformations/models/silver/int_taxi_trips_zones_joined
+  uuid: trigger_dbt_gold
 cache_block_output_in_memory: false
 callbacks: []
 concurrency_config: {}

@@ -2,7 +2,8 @@
 /original.env
 
 # Base de datos
-/db-data
+/db-data/*
+!/db-data/.gitkeep
 
 # Archivos cache de mageai
 /orchestrator-data/mage_data/scheduler/pipelines/dbt_build_gold

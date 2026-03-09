@@ -1,0 +1,14 @@
+sources:
+- description: Dataframes Mage upstream blocks
+  loader: mage
+  name: mage_nyc_taxis_transformations
+  schema: analytics
+  tables:
+  - description: Dataframe for block `tranquil_pond` of the `dbt_build_gold` mage
+      pipeline.
+    identifier: mage_dbt_build_gold_tranquil_pond
+    meta:
+      block_uuid: tranquil_pond
+      pipeline_uuid: dbt_build_gold
+    name: dbt_build_gold_tranquil_pond
+version: 2

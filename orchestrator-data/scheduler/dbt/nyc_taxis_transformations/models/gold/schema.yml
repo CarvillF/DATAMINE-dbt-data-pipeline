@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: dim_service_type
+    columns:
+      - name: service_type
+        tests:
+          - accepted_values:
+              values: ['yellow', 'green']
+
+  - name: dim_payment_type
+    columns:
+      - name: payment_type
+        tests:
+          - accepted_values:
+              values: ['cash', 'card', 'other/unknown']
+
+  - name: dim_zone
+    columns:
+      - name: zone_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_date
+    columns:
+      - name: date_key
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_trips
+    columns:
+      - name: trip_key
+        tests:
+          - unique
+          - not_null
+      
+      - name: pu_zone_key
+        tests:
+          - relationships:
+              to: ref('dim_zone')
+              field: zone_key
+
+      - name: do_zone_key
+        tests:
+          - relationships:
+              to: ref('dim_zone')
+              field: zone_key
+
+      - name: pickup_date_key
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_key

@@ -1,0 +1,12 @@
+nyc_taxis_transformations:
+  outputs:
+    dev:
+      dbname: source
+      host: datamine-dbt-data-pipeline-warehouse-1
+      pass: root
+      port: 5432
+      schema: analytics
+      threads: 4
+      type: postgres
+      user: root
+  target: dev

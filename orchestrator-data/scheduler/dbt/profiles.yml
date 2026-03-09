@@ -10,6 +10,7 @@ base:
       pass: "{{ mage_secret_var('POSTGRES_PASSWORD') }}"
       port: "{{ mage_secret_var('POSTGRES_PORT') }}"
       dbname: "{{ mage_secret_var('POSTGRES_DB') }}"
+      schema: analytics
       threads: 4
 
   target: dev
