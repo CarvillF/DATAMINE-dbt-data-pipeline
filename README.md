@@ -50,11 +50,14 @@ El pipeline sigue una arquitectura de medallas para garantizar la calidad y estr
 
 *Nota: La siguiente tabla documenta la ingesta de datos para los años 2022 a 2025.*
 
-| year_month | service_type | status | row_count |
-| :--- | :--- | :--- | :--- |
-|[ EJ: 2022-01 ] | [ EJ: yellow ] | [ EJ: loaded / missing ] |[ INSERTA CONTEO ] |
-| [ EJ: 2022-01 ] | [ EJ: green ] | [ EJ: loaded / missing ] | [ INSERTA CONTEO ] |
-|[ INSERTA RESTO DE MESES... ] | ... | ... | ... |
+| year_month | service_type | status | 
+| ---------- | ------------ | ------ | 
+| 2022-01    | green        | loaded | 
+| 2022-01    | yellow       | loaded | 
+| 2022-02    | green        | loaded | 
+| 2022-02    | yellow       | loaded | 
+| ...        | ...          | ...    |
+| 2025-12    | yellow       | loaded |
 
 ---
 
@@ -79,9 +82,8 @@ Para reproducir este proyecto en un entorno local, asegúrate de tener instalado
 ## 4. Nombres de Mage pipelines y qué hace cada uno
 
 *   **`ingest_bronze`**: Pipeline encargado de descargar los datos mensuales (Yellow/Green) y el Taxi Zone Lookup. Realiza un chunking mensual y asegura la idempotencia eliminando los registros del `source_month` y `service_type` correspondientes antes de insertar nuevos datos en la capa Bronze.
-*   **`[ INSERTA NOMBRE DE TU PIPELINE DE PARTICIONES SI APLICA ]`**:[ EJ: Script de Python/SQL ejecutado desde Mage que dropea y recrea la estructura DDL de particionamiento (RANGE, HASH, LIST) en la capa Gold previo a la ejecución de dbt. ]
 *   **`dbt_build_silver`**: Pipeline que ejecuta `dbt run --select silver` para crear/actualizar las vistas de limpieza y estandarización.
-*   **`dbt_build_gold`**: Pipeline que ejecuta `dbt run --select gold` para poblar el modelo estrella particionado.
+*   **`dbt_build_gold`**: Pipeline que ejecuta `dbt run --select gold` para poblar el modelo estrella. Incluye particionado.
 *   **`quality_checks`**: Pipeline que ejecuta `dbt test` para validar las llaves primarias, relaciones y valores aceptados definidos en el proyecto.
 
 ---
@@ -89,11 +91,10 @@ Para reproducir este proyecto en un entorno local, asegúrate de tener instalado
 ## 5. Nombres de triggers y qué disparan
 
 *   **`ingest_monthly` (Schedule trigger):** Configurado para ejecutarse de forma[ INSERTA FRECUENCIA: diaria / semanal / mensual ], disparando el pipeline `ingest_bronze` para mantener los datos actualizados.
-*   **`dbt_after_ingest` (Event trigger / Pipeline chaining):** Disparador basado en eventos que inicia automáticamente cuando `ingest_bronze` termina exitosamente. Ejecuta en cadena y en el siguiente orden:
+*   **`bloques de trigger`:** Bloques contenidos en cada pipeline basado en eventos que inicia automáticamente cuando los pipelines terminan exitosamente. Ejecutan en cadena y en el siguiente orden:
     1. `dbt_build_silver`
     2. Scripts SQL de particionamiento
     3. `dbt_build_gold`
-    4. `quality_checks`
 
 ---
 
@@ -112,37 +113,7 @@ Todas las credenciales y parámetros de conexión se manejan a través de **Mage
 
 ## 7. Particionamiento
 
-Se implementó particionamiento declarativo nativo en PostgreSQL en la capa Gold.
-
-### Evidencias `\d+`
-
-**Hechos - RANGE (`gold.fct_trips`):**
-```text[ INSERTA AQUÍ EL OUTPUT DE LA CONSOLA AL EJECUTAR \d+ analytics_gold.mart_fct_trips ][ Asegúrate de que se vea la línea "Partition key: RANGE (pickup_date)" y la lista de particiones mensuales ]
-```
-
-**Dimensiones - HASH (`gold.dim_zone`):**
-```text[ INSERTA AQUÍ EL OUTPUT DE \d+ analytics_gold.mart_dim_zone ][ Debe mostrar "Partition key: HASH (zone_key)" y las 4 particiones ]
-```
-
-**Dimensiones - LIST (`gold.dim_service_type` y `gold.dim_payment_type`):**
-```text[ INSERTA AQUÍ EL OUTPUT DE \d+ PARA AMBAS TABLAS MOSTRANDO "Partition key: LIST (...)" ]
-```
-
-### Evidencias de Partition Pruning (`EXPLAIN ANALYZE`)
-
-**1. Filtro por mes en tabla de hechos (`fct_trips`):**
-```sql[ INSERTA AQUÍ EL QUERY DE EJEMPLO. EJ: EXPLAIN (ANALYZE, BUFFERS) SELECT count(*) FROM analytics_gold.mart_fct_trips WHERE pickup_date BETWEEN '2024-01-01' AND '2024-01-31'; ]
-```
-```text[ INSERTA AQUÍ EL OUTPUT DEL EXPLAIN ]
-```
-
-**2. Búsqueda por `zone_key` en dimensión (`dim_zone`):**
-```sql[ INSERTA AQUÍ EL QUERY DE EJEMPLO. EJ: EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM analytics_gold.mart_dim_zone WHERE zone_key = 132; ]
-```
-```text[ INSERTA AQUÍ EL OUTPUT DEL EXPLAIN ]
-```
-
-**Interpretación del Pruning (2-4 líneas):**[ INSERTA AQUÍ TU EXPLICACIÓN. Ejemplo: El plan de ejecución demuestra el partition pruning ya que, en lugar de realizar un Seq Scan sobre toda la tabla, el motor de Postgres escanea exclusivamente la partición correspondiente (ej. `mart_fct_trips_2024_01` o `mart_dim_zone_p0`), descartando las demás. Esto se evidencia en la reducción dramática de los 'Buffers' leídos y el tiempo total de ejecución. ]
+Se implementó particionamiento declarativo nativo en PostgreSQL en la capa Gold. Se puede encontrar dentro de mageAI en el primer bloque de dbt_build_gold (model_partitioning.py)
 
 ---
 
@@ -151,10 +122,6 @@ Se implementó particionamiento declarativo nativo en PostgreSQL en la capa Gold
 ### Materializations
 *   **Capa Silver:** Materializada obligatoriamente como `view`. Definido en `dbt_project.yml` bajo la carpeta silver.
 *   **Capa Gold:** Materializada como `table`. Para las tablas particionadas (hechos y dimensiones list/hash), se utilizó una estrategia de materialización híbrida en el config del modelo (`materialized='incremental', incremental_strategy='append'`) en conjunto con un `pre_hook="truncate table {{ this }};"` para respetar la estructura de particiones DDL creada previamente desde Mage. Las dimensiones regulares (como `dim_date`) se materializaron como `table` estándar.
-
-### Logs de Ejecución (`dbt run` y `dbt test`)
-```text[ INSERTA AQUÍ CAPTURAS O SNIPPETS DE TEXTO MOSTRANDO EL PASSING DE DBT RUN Y DBT TEST DESDE MAGE ]
-```
 
 ---
 
@@ -185,7 +152,7 @@ Durante el desarrollo de este PSet, se identificaron y resolvieron los siguiente
 - [x] Silver materialized = views; Gold materialized = tables
 - [x] Gold tiene esquema estrella completo
 - [x] Particionamiento: RANGE en `fct_trips`, HASH en `dim_zone`, LIST en `dim_service_type` y `dim_payment_type`
-- [x] README incluye `\d+` y `EXPLAIN (ANALYZE, BUFFERS)` con pruning
+- [ ] README incluye `\d+` y `EXPLAIN (ANALYZE, BUFFERS)` con pruning
 - [x] `dbt test` pasa desde Mage
 - [x] Notebook responde 20 preguntas usando solo `gold.*`
 - [x] Triggers configurados y evidenciados
